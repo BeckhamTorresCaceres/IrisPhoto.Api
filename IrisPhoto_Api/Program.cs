@@ -1,9 +1,24 @@
+using IrisPhoto_Api.Infrastructure;
+using IrisPhoto_Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using System.Threading.RateLimiting;
+using static IrisPhoto_Api.Infrastructure.IBaseRepository;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// 1. Intentar obtener la cadena de conexión del appsettings.json o de una variable de entorno personalizada
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+                       ?? Environment.GetEnvironmentVariable("DATABASE_URL");
+
+// 2. Registrar el DbContext con esa cadena
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(connectionString));
+
+builder.Services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
+builder.Services.AddScoped<IUsersServices, UsersServices>();
 
 // 1. Configuración de Controladores y JSON (CamelCase por defecto para JS/React Native)
 builder.Services.AddControllers()
