@@ -19,6 +19,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
 builder.Services.AddScoped<IUsersServices, UsersServices>();
+builder.Services.AddSingleton<IAppConfigService, AppConfigService>();
 
 // 1. Configuración de Controladores y JSON (CamelCase por defecto para JS/React Native)
 builder.Services.AddControllers()
@@ -32,9 +33,12 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
 
+var configService = new AppConfigService(builder.Configuration, builder.Environment);
+
 // 3. Configuración de Autenticación JWT (Reemplaza con tus claves reales desde appsettings.json)
-var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-var secretKey = jwtSettings["SecretKey"] ?? "SUPER_SECRET_KEY_CAMBIAR_EN_PRODUCCION_DE_AL MENOS_32_BYTES";
+var secretKey = configService.GetRequiredValue("JwtSettings:SecretKey", "JWT_SECRET_KEY");
+var issuer = configService.GetValue("JwtSettings:Issuer", "JWT_ISSUER", "IrisPhotoApi");
+var audience = configService.GetValue("JwtSettings:Audience", "JWT_AUDIENCE", "IrisPhotoMobile");
 
 builder.Services.AddAuthentication(options =>
 {
@@ -49,8 +53,8 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = jwtSettings["Issuer"] ?? "MiApiNet",
-        ValidAudience = jwtSettings["Audience"] ?? "MiAppMobile",
+        ValidIssuer = issuer,
+        ValidAudience = audience,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
     };
 });
@@ -73,7 +77,7 @@ builder.Services.AddRateLimiter(options =>
     options.OnRejected = async (context, cancellationToken) =>
     {
         context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
-        await context.HttpContext.Response.WriteAsync("Demasiadas peticiones. Por favor, inténtalo más tarde.");
+        await context.HttpContext.Response.WriteAsync("Too many requests. Please try again later.");
     };
 });
 
