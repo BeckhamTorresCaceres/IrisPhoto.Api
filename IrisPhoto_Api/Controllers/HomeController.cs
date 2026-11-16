@@ -19,14 +19,5 @@ namespace IrisPhoto_Api.Controllers
         {
             return $"API_IrisPhoto -> v.1 - {DateTime.Now}";
         }
-
-        [HttpGet("GetAllUsers")]
-        public async Task<IActionResult> GetAllUsers()
-        {
-            // Gracias al BaseRepository, GetAllAsync() ya trae toda la tabla automáticamente
-            var users = await _usersService.GetAllAsync();
-
-            return Ok(users);
-        }
     }
 }
