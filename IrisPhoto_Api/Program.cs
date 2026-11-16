@@ -86,18 +86,20 @@ var app = builder.Build();
 // 5. Configuración del Pipeline de Middleware (El orden es estricto)
 
 // Manejo global de excepciones para entornos que no son de desarrollo (devuelve ProblemDetails RFC 7807)
-if (app.Environment.IsDevelopment())
+var enableSwagger = configService.GetValue<bool>("AppSettings:EnableSwagger", "ENABLE_SWAGGER", app.Environment.IsDevelopment());
+if (enableSwagger)
 {
     app.MapOpenApi();
     app.UseSwaggerUI(options =>
     {
-        options.SwaggerEndpoint("/openapi/v1.json", "Mi API v1");
-        options.RoutePrefix = string.Empty; // Opcional: hace que Swagger abra directamente en la raíz (http://localhost:xxxx/)
+        options.SwaggerEndpoint("/openapi/v1.json", "IrisPhoto API v1");
+        options.RoutePrefix = string.Empty;
     });
 }
-else
+
+if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/error"); // Crea un endpoint o controlador para manejar errores generales de producción
+    app.UseExceptionHandler("/error");
     app.UseHsts();
 }
 
