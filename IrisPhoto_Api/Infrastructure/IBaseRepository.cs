@@ -5,7 +5,7 @@
         public interface IBaseRepository<T> where T : class
         {
             // 1. Obtener toda la tabla (para filtros, DataTables, etc.)
-            Task<IEnumerable<T>> GetAllAsync();
+            IQueryable<T> GetAll();
 
             // 2. Obtener por ID (Read)
             Task<T?> GetByIdAsync(int id);

@@ -14,10 +14,9 @@ namespace IrisPhoto_Api.Infrastructure
             _dbSet = _context.Set<T>();
         }
 
-        public virtual async Task<IEnumerable<T>> GetAllAsync()
+        public virtual IQueryable<T> GetAll()
         {
-            // Devuelve toda la tabla. Ideal para que el frontend o DataTable aplique filtros/paginación
-            return await _dbSet.ToListAsync();
+            return _dbSet.AsNoTracking();
         }
 
         public virtual async Task<T?> GetByIdAsync(int id)

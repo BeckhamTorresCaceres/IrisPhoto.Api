@@ -3,6 +3,7 @@ using IrisPhoto_Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
 using System.Text;
 using System.Threading.RateLimiting;
 using static IrisPhoto_Api.Infrastructure.IBaseRepository;
@@ -18,8 +19,11 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
 
 builder.Services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
-builder.Services.AddScoped<IUsersServices, UsersServices>();
 builder.Services.AddSingleton<IAppConfigService, AppConfigService>();
+
+builder.Services.AddScoped<IUsersServices, UsersServices>();
+builder.Services.AddScoped<IBoxesServices, BoxesServices>();
+
 
 // 1. Configuración de Controladores y JSON (CamelCase por defecto para JS/React Native)
 builder.Services.AddControllers()
@@ -31,7 +35,31 @@ builder.Services.AddControllers()
 
 // 2. Configuración de OpenAPI / Swagger
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer((document, context, cancellationToken) =>
+    {
+        var scheme = new OpenApiSecurityScheme
+        {
+            Type = SecuritySchemeType.Http,
+            Scheme = "bearer",
+            BearerFormat = "JWT",
+            Description = "Pega aquí tu token JWT (sin escribir la palabra Bearer)."
+        };
+
+        document.Components ??= new OpenApiComponents();
+        document.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>();
+        document.Components.SecuritySchemes["Bearer"] = scheme;
+
+        document.Security ??= [];
+        document.Security.Add(new OpenApiSecurityRequirement
+        {
+            [new OpenApiSecuritySchemeReference("Bearer", document)] = []
+        });
+
+        return Task.CompletedTask;
+    });
+});
 
 var configService = new AppConfigService(builder.Configuration, builder.Environment);
 
