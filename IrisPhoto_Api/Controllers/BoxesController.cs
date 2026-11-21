@@ -32,7 +32,7 @@ namespace IrisPhoto_Api.Controllers
             return Ok(ApiResponse<Box>.Ok(box, "element created successfully"));
         }
 
-        [HttpPost("Get")]
+        [HttpGet("Get")]
         public async Task<ActionResult> Get(PasswordType passwordType, string password)
         {
             var userId = User.GetUserId();
